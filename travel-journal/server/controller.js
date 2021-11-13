@@ -1,6 +1,41 @@
+require('dotenv').config()
+const {CONNECTION_STRING} = process.env
+const Sequelize = require('sequelize')
+const sequelize = new Sequelize(CONNECTION_STRING, {
+    dialect: 'postgres',
+    dialectOptions: {
+        ssl: {
+            rejectUnauthorized: false
+        }
+    }
+});
 
+// In controller.js, write a new function called createCity
+// Using sequelize.query query your database to insert some data into your table. A name, a rating, and a countryId will be sent on the req.body. Write an insert statement that adds those into the database. (Remember to use a template string for this, and feel free to destructure the values from req.body if you’d like).
+// Handle the promise with .then() passing in a callback: dbRes => res.status(200).send(dbRes[0]) (you can also add a .catch)
+// In index.js, comment line 18 back in (this line: app.post('/cities', createCity))
+// You should now be able to add cities in the browser! You can confirm this by using the form and then selecting from your DB in SQL Tabs. However, they won’t be showing up in the browser yet, which is where the next step comes in.
 
 module.exports = {
+    getCountries: (req, res) => {
+        sequelize.query(`select * from countries`)
+        .then((dbRes) => res.status(200).send(dbRes[0]))
+        .catch((err) => console.log(err));
+    },
+    createCity: (req, res) => {
+        let {
+            name,
+            countryId,
+            rating
+        } = req.body;
+        // console.log(countryId);
+        sequelize.query(`insert into cities(name, rating)
+                        values (${name}, ${rating});
+                        insert into cities
+                        select country_id from countries where country_id = ${countryId});`)
+        .then((dbRes) => res.status(200).send(dbRes[0]))
+        .catch((err) => console.log(err));
+    },
     seed: (req, res) => {
         sequelize.query(`
             drop table if exists cities;
@@ -11,7 +46,13 @@ module.exports = {
                 name varchar
             );
 
-            *****YOUR CODE HERE*****
+            create table cities (
+                city_id serial primary key,
+                name varchar,
+                rating integer,
+                country_id int,
+                foreign key (country_id) references countries(country_id)
+            );
 
             insert into countries (name)
             values ('Afghanistan'),
