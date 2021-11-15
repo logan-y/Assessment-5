@@ -10,18 +10,13 @@ const sequelize = new Sequelize(CONNECTION_STRING, {
     }
 });
 
-// In controller.js, write a new function called createCity
-// Using sequelize.query query your database to insert some data into your table. A name, a rating, and a countryId will be sent on the req.body. Write an insert statement that adds those into the database. (Remember to use a template string for this, and feel free to destructure the values from req.body if you’d like).
-// Handle the promise with .then() passing in a callback: dbRes => res.status(200).send(dbRes[0]) (you can also add a .catch)
-// In index.js, comment line 18 back in (this line: app.post('/cities', createCity))
-// You should now be able to add cities in the browser! You can confirm this by using the form and then selecting from your DB in SQL Tabs. However, they won’t be showing up in the browser yet, which is where the next step comes in.
-
 module.exports = {
     getCountries: (req, res) => {
-        sequelize.query(`select * from countries`)
+        sequelize.query(`SELECT * FROM countries`)
         .then((dbRes) => res.status(200).send(dbRes[0]))
         .catch((err) => console.log(err));
     },
+
     createCity: (req, res) => {
         let {
             name,
@@ -29,13 +24,28 @@ module.exports = {
             rating
         } = req.body;
         // console.log(countryId);
-        sequelize.query(`insert into cities(name, rating)
-                        values (${name}, ${rating});
-                        insert into cities
-                        select country_id from countries where country_id = ${countryId});`)
+        sequelize.query(`INSERT INTO cities (name, rating, country_id)
+                        VALUES ('${name}', '${rating}', '${countryId}');`)
         .then((dbRes) => res.status(200).send(dbRes[0]))
-        .catch((err) => console.log(err));
+        .catch((err) => console.log(err, 'error here'));
     },
+
+    getCities: (req, res) => {
+        sequelize.query(`SELECT a.city_id, a.name AS city, a.rating, b.country_id, b.name AS country
+                        FROM cities AS a
+                        JOIN countries AS b
+                        ON a.country_id = b.country_id
+                        ORDER BY a.rating DESC;`)
+        .then((dbRes) => res.status(200).send(dbRes[0]))
+        .catch((err) => console.log(err, 'error here'));
+    },
+
+    deleteCity: (req, res) => {
+        sequelize.query(`DELETE FROM cities WHERE city_id = ${req.params.id};`)
+        .then((dbRes) => res.status(200).send(dbRes[0]))
+        .catch((err) => console.log(err, 'errrrrrror'));
+    },
+
     seed: (req, res) => {
         sequelize.query(`
             drop table if exists cities;
@@ -54,6 +64,7 @@ module.exports = {
                 foreign key (country_id) references countries(country_id)
             );
 
+            
             insert into countries (name)
             values ('Afghanistan'),
             ('Albania'),
@@ -250,8 +261,13 @@ module.exports = {
             ('Yemen'),
             ('Zambia'),
             ('Zimbabwe');
-        `).then(() => {
-            console.log('DB seeded!')
+
+            insert into cities (name, rating, country_id)
+            values('Asau', 4, 182),
+            ('Vaiaku', 5, 182),
+            ('Lolua', 4, 182);
+            `).then(() => {
+                console.log('DB seeded!')
             res.sendStatus(200)
         }).catch(err => console.log('error seeding DB', err))
     }

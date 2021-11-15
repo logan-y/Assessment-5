@@ -30,7 +30,7 @@ function handleSubmit(e) {
 function deleteCard(id) {
     axios.delete(`http://localhost:4004/cities/${id}`)
         .then(() => getCities())
-        .catch(err => console.log(err))
+        .catch(err => console.log(err, 'error'))
 }
 
 function getCities() {
